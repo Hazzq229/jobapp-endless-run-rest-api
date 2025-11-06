@@ -151,7 +151,7 @@ Transform:
   m_GameObject: {fileID: 148270}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -11.88, y: 1.115, z: 0}
+  m_LocalPosition: {x: -11.54, y: 1.115, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -297,7 +297,7 @@ Transform:
   m_GameObject: {fileID: 213346670}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.48, y: 0.92, z: 0}
+  m_LocalPosition: {x: -3.48, y: 0.805, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -316,17 +316,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   objects:
-  - prefab: {fileID: 2008811433931751997, guid: ff230da1cfce4db479376c551d41ee9a, type: 3}
+  - prefab: {fileID: 2008811433931751997, guid: a21739213a724ab4e94d939507dba2a6, type: 3}
     spawnChance: 0.2
-  - prefab: {fileID: 2008811433931751997, guid: ac7aae5a680eb544694ceedd8d558ca7, type: 3}
+  - prefab: {fileID: 2008811433931751997, guid: eda9e62bd47174f40a384f8b9218b306, type: 3}
     spawnChance: 0.18
-  - prefab: {fileID: 2008811433931751997, guid: 3e159c2a0ea32534488d3988a8e72c6d, type: 3}
+  - prefab: {fileID: 2008811433931751997, guid: 558c1e8c77f898d4389134dfa8144d5d, type: 3}
     spawnChance: 0.16
-  - prefab: {fileID: 2008811433931751997, guid: ff230da1cfce4db479376c551d41ee9a, type: 3}
+  - prefab: {fileID: 2008811433931751997, guid: 3e159c2a0ea32534488d3988a8e72c6d, type: 3}
     spawnChance: 0.14
   - prefab: {fileID: 2008811433931751997, guid: ac7aae5a680eb544694ceedd8d558ca7, type: 3}
     spawnChance: 0.12
-  - prefab: {fileID: 2008811433931751997, guid: 3e159c2a0ea32534488d3988a8e72c6d, type: 3}
+  - prefab: {fileID: 2008811433931751997, guid: eda9e62bd47174f40a384f8b9218b306, type: 3}
     spawnChance: 0.1
   - prefab: {fileID: 2008811433931751997, guid: ff230da1cfce4db479376c551d41ee9a, type: 3}
     spawnChance: 0.05
@@ -484,6 +484,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   baseUrl: http://localhost:5289
   requestTimeout: 10
+  enableDebugLogs: 1
+  useWestIndonesianTime: 1
+  windowsTimeZoneId: SE Asia Standard Time
+  ianaTimeZoneId: Asia/Jakarta
 --- !u!4 &286216543
 Transform:
   m_ObjectHideFlags: 0
@@ -537,7 +541,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 286.9, y: -143.3}
+  m_AnchoredPosition: {x: 278, y: -143.3}
   m_SizeDelta: {x: 195.8603, y: 35.5889}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &450738387
@@ -1119,10 +1123,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 808728480}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 90.4, y: -24.9}
-  m_SizeDelta: {x: 140.8, y: 22.4402}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -106.87541, y: -20.9}
+  m_SizeDelta: {x: 189.5508, y: 22.4402}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &531459051
 MonoBehaviour:
@@ -1204,7 +1208,7 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
+  m_HorizontalAlignment: 4
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -1435,10 +1439,10 @@ RectTransform:
   - {fileID: 1749286851}
   m_Father: {fileID: 808728480}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -12.799988, y: -10.700012}
-  m_SizeDelta: {x: 77.169, y: 20.415}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 158, y: -10.700012}
+  m_SizeDelta: {x: 77.16901, y: 20.415}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &550957954
 MonoBehaviour:
@@ -2062,7 +2066,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 8.3, y: 20.9}
+  m_AnchoredPosition: {x: 1, y: 20.9}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1081033933
