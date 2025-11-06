@@ -21,15 +21,20 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
-        direction += gravity * Time.deltaTime * Vector3.down;
-
         if (character.isGrounded)
         {
-            direction = Vector3.down;
+            // jaga tetap di tanah, jangan terus dorong ke bawah
+            direction.y = -1f;
 
-            if (Input.GetButton("Jump")) {
-                direction = Vector3.up * jumpForce;
+            if (Input.GetButton("Jump"))
+            {
+                direction.y = jumpForce;
             }
+        }
+        else
+        {
+            // baru tambahkan gravitasi ketika di udara
+            direction.y -= gravity * Time.deltaTime;
         }
 
         character.Move(direction * Time.deltaTime);
