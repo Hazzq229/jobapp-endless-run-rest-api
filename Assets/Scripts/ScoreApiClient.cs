@@ -48,20 +48,6 @@ public class ScoreApiClient : MonoBehaviour
     public string ScoresPath => "/api/scores";
     public int requestTimeout = 10;
 
-    [Header("Debug")]
-    [Tooltip("Enable verbose debug logging for API CRUD calls.")]
-    public bool enableDebugLogs = true;
-
-    [Header("Time Settings")]
-    [Tooltip("When true, CreatedAt will use West Indonesian Time (UTC+7) instead of UTC.")]
-    public bool useWestIndonesianTime = false;
-
-    [Tooltip("Windows Time Zone ID used when useWestIndonesianTime=true (default: SE Asia Standard Time)")]
-    public string windowsTimeZoneId = "SE Asia Standard Time"; // Bangkok, Hanoi, Jakarta (UTC+7)
-
-    [Tooltip("IANA Time Zone ID fallback for non-Windows platforms (default: Asia/Jakarta)")]
-    public string ianaTimeZoneId = "Asia/Jakarta"; // UTC+7
-
     void Awake()
     {
         if (Instance == null) Instance = this;
@@ -75,62 +61,17 @@ public class ScoreApiClient : MonoBehaviour
         if (req.method == UnityWebRequest.kHttpVerbPOST || req.method == UnityWebRequest.kHttpVerbPUT)
             req.SetRequestHeader("Content-Type", "application/json");
 
-        if (enableDebugLogs)
-        {
-            Debug.Log($"[ScoreApiClient] Sending {req.method} {req.url}");
-        }
-
         yield return req.SendWebRequest();
 
-        #if UNITY_2020_1_OR_NEWER
+#if UNITY_2020_1_OR_NEWER
         if (req.result == UnityWebRequest.Result.ConnectionError || req.result == UnityWebRequest.Result.ProtocolError)
-        #else
+#else
         if (req.isNetworkError || req.isHttpError)
-        #endif
+#endif
         {
             Debug.LogWarning($"ScoreApiClient request error: {req.responseCode} {req.error} -> {req.url}");
         }
-        else if (enableDebugLogs)
-        {
-            Debug.Log($"[ScoreApiClient] Response {req.responseCode} {req.method} {req.url}");
-        }
         onDone?.Invoke(req);
-    }
-
-    // Returns current time formatted as ISO-8601; if useWestIndonesianTime is true, returns WIB (UTC+7) with offset
-    string NowIsoString()
-    {
-        if (!useWestIndonesianTime)
-        {
-            return DateTime.UtcNow.ToString("o");
-        }
-
-        // Prefer system timezone if available; otherwise fall back to +07 offset
-        try
-        {
-            if (!string.IsNullOrEmpty(windowsTimeZoneId))
-            {
-                var tzWin = TimeZoneInfo.FindSystemTimeZoneById(windowsTimeZoneId);
-                var local = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, tzWin);
-                return local.ToString("o");
-            }
-        }
-        catch { /* ignore and try IANA */ }
-
-        try
-        {
-            if (!string.IsNullOrEmpty(ianaTimeZoneId))
-            {
-                var tzIana = TimeZoneInfo.FindSystemTimeZoneById(ianaTimeZoneId);
-                var local = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, tzIana);
-                return local.ToString("o");
-            }
-        }
-        catch { /* ignore and fall back */ }
-
-        // Fallback: manually apply +07:00 offset
-        var wib = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7));
-        return wib.ToString("o");
     }
 
     // GET leaderboard page
@@ -142,8 +83,6 @@ public class ScoreApiClient : MonoBehaviour
     IEnumerator GetLeaderboardCoroutine(int page, int pageSize, Action<PlayerScore[], int?> onComplete)
     {
         string url = $"{baseUrl}{ScoresPath}?page={page}&pageSize={pageSize}";
-        if (enableDebugLogs)
-            Debug.Log($"[ScoreApiClient] GET leaderboard page={page} size={pageSize} url={url}");
         using (var req = UnityWebRequest.Get(url))
         {
             yield return SendRequest(req, null);
@@ -154,16 +93,9 @@ public class ScoreApiClient : MonoBehaviour
                 int? total = null;
                 if (req.GetResponseHeaders()?.TryGetValue("X-Total-Count", out var t) == true)
                     if (int.TryParse(t, out var tt)) total = tt;
-                if (enableDebugLogs)
-                    Debug.Log($"[ScoreApiClient] GET leaderboard success items={(arr==null?0:arr.Length)} total={(total.HasValue?total.Value.ToString():"?")}");
                 onComplete?.Invoke(arr, total);
             }
-            else
-            {
-                if (enableDebugLogs)
-                    Debug.LogWarning($"[ScoreApiClient] GET leaderboard failed code={req.responseCode} error={req.error}");
-                onComplete?.Invoke(null, null);
-            }
+            else onComplete?.Invoke(null, null);
         }
     }
 
@@ -178,16 +110,11 @@ public class ScoreApiClient : MonoBehaviour
         playerName = playerName?.Trim() ?? string.Empty;
         if (string.IsNullOrEmpty(playerName)) { onComplete?.Invoke(null); yield break; }
 
-        if (enableDebugLogs)
-            Debug.Log($"[ScoreApiClient] FindPlayerRecord (case-sensitive) '{playerName}', maxPages={maxPages}");
-
         int page = 1;
         int pageSize = 100; // server caps >100 to 10; use 100 as max allowed
 
         while (page <= maxPages)
         {
-            if (enableDebugLogs)
-                Debug.Log($"[ScoreApiClient] Scanning page {page} (size {pageSize}) for '{playerName}'");
             PlayerScore[] results = null;
             int? total = null;
             bool done = false;
@@ -199,11 +126,8 @@ public class ScoreApiClient : MonoBehaviour
 
             foreach (var r in results)
             {
-                // Case-sensitive comparison, treat different capitalization as different users
-                if (string.Equals(r.PlayerName, playerName, StringComparison.Ordinal))
+                if (string.Equals(r.PlayerName, playerName, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (enableDebugLogs)
-                        Debug.Log($"[ScoreApiClient] Found '{playerName}' id={r.Id} score={r.Score}");
                     onComplete?.Invoke(r);
                     yield break;
                 }
@@ -213,8 +137,7 @@ public class ScoreApiClient : MonoBehaviour
             if (results.Length < pageSize) break;
             page++;
         }
-        if (enableDebugLogs)
-            Debug.Log($"[ScoreApiClient] Player '{playerName}' not found after scanning {page-1} pages");
+
         onComplete?.Invoke(null);
     }
 
@@ -226,27 +149,17 @@ public class ScoreApiClient : MonoBehaviour
 
     IEnumerator EnsurePlayerExistsCoroutine(string playerName, Action<PlayerScore> onComplete)
     {
-        if (enableDebugLogs)
-            Debug.Log($"[ScoreApiClient] EnsurePlayerExists '{playerName}'");
         PlayerScore found = null;
         bool finished = false;
         FindPlayerRecord(playerName, (r) => { found = r; finished = true; });
         while (!finished) yield return null;
 
-        if (found != null)
-        {
-            if (enableDebugLogs)
-                Debug.Log($"[ScoreApiClient] Player exists id={found.Id} score={found.Score}");
-            onComplete?.Invoke(found);
-            yield break;
-        }
+        if (found != null) { onComplete?.Invoke(found); yield break; }
 
         // create
-    var create = new PlayerScore { PlayerName = playerName, Score = 0, CreatedAt = NowIsoString() };
+        var create = new PlayerScore { PlayerName = playerName, Score = 0, CreatedAt = DateTime.UtcNow.ToString("o") };
         string json = JsonUtility.ToJson(create);
         string url = $"{baseUrl}{ScoresPath}";
-        if (enableDebugLogs)
-            Debug.Log($"[ScoreApiClient] Creating new player '{playerName}' via POST {url}");
         using (var req = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST))
         {
             byte[] body = Encoding.UTF8.GetBytes(json);
@@ -258,16 +171,9 @@ public class ScoreApiClient : MonoBehaviour
             {
                 var txt = req.downloadHandler.text;
                 var created = ParseSingleJson(txt);
-                if (enableDebugLogs)
-                    Debug.Log($"[ScoreApiClient] Create player success id={(created!=null?created.Id:-1)} name='{created?.PlayerName}'");
                 onComplete?.Invoke(created);
             }
-            else
-            {
-                if (enableDebugLogs)
-                    Debug.LogWarning($"[ScoreApiClient] Create player failed code={req.responseCode} error={req.error}");
-                onComplete?.Invoke(null);
-            }
+            else onComplete?.Invoke(null);
         }
     }
 
@@ -279,8 +185,6 @@ public class ScoreApiClient : MonoBehaviour
 
     IEnumerator UpdateScoreForPlayerCoroutine(string playerName, int score, Action<PlayerScore> onComplete)
     {
-        if (enableDebugLogs)
-            Debug.Log($"[ScoreApiClient] UpdateScoreForPlayer '{playerName}' -> {score}");
         PlayerScore existing = null;
         bool done = false;
         FindPlayerRecord(playerName, (r) => { existing = r; done = true; });
@@ -289,9 +193,7 @@ public class ScoreApiClient : MonoBehaviour
         if (existing == null)
         {
             // create new record
-            if (enableDebugLogs)
-                Debug.Log($"[ScoreApiClient] No existing record for '{playerName}', creating new with score={score}");
-            var create = new PlayerScore { PlayerName = playerName, Score = score, CreatedAt = NowIsoString() };
+            var create = new PlayerScore { PlayerName = playerName, Score = score, CreatedAt = DateTime.UtcNow.ToString("o") };
             string json = JsonUtility.ToJson(create);
             string url = $"{baseUrl}{ScoresPath}";
             using (var req = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST))
@@ -304,28 +206,19 @@ public class ScoreApiClient : MonoBehaviour
                 {
                     var txt = req.downloadHandler.text;
                     var created = ParseSingleJson(txt);
-                    if (enableDebugLogs)
-                        Debug.Log($"[ScoreApiClient] Create score success id={(created!=null?created.Id:-1)} name='{created?.PlayerName}' score={created?.Score}");
                     onComplete?.Invoke(created);
                 }
-                else
-                {
-                    if (enableDebugLogs)
-                        Debug.LogWarning($"[ScoreApiClient] Create score failed code={req.responseCode} error={req.error}");
-                    onComplete?.Invoke(null);
-                }
+                else onComplete?.Invoke(null);
             }
             yield break;
         }
 
-    // update existing
-    existing.Score = score;
-    // update CreatedAt to the time of this score update (as requested)
-    existing.CreatedAt = NowIsoString();
+        // update existing
+        existing.Score = score;
+        // preserve original CreatedAt if present
+        if (string.IsNullOrEmpty(existing.CreatedAt)) existing.CreatedAt = DateTime.UtcNow.ToString("o");
         string putJson = JsonUtility.ToJson(existing);
         string putUrl = $"{baseUrl}{ScoresPath}/{existing.Id}";
-        if (enableDebugLogs)
-            Debug.Log($"[ScoreApiClient] Updating id={existing.Id} score={existing.Score} via PUT {putUrl}");
         using (var req = new UnityWebRequest(putUrl, UnityWebRequest.kHttpVerbPUT))
         {
             req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(putJson));
@@ -336,8 +229,6 @@ public class ScoreApiClient : MonoBehaviour
             {
                 // server returns 204 NoContent; to get fresh record we can re-fetch by id
                 // try to GET by id
-                if (enableDebugLogs)
-                    Debug.Log($"[ScoreApiClient] Update success for id={existing.Id}, fetching the updated record");
                 string getUrl = $"{baseUrl}{ScoresPath}/{existing.Id}";
                 using (var getReq = UnityWebRequest.Get(getUrl))
                 {
@@ -346,22 +237,13 @@ public class ScoreApiClient : MonoBehaviour
                     {
                         var createdTxt = getReq.downloadHandler.text;
                         var updated = ParseSingleJson(createdTxt);
-                        if (enableDebugLogs)
-                            Debug.Log($"[ScoreApiClient] GET-by-id success id={(updated!=null?updated.Id:existing.Id)} score={(updated!=null?updated.Score:existing.Score)}");
                         onComplete?.Invoke(updated ?? existing);
                         yield break;
                     }
                 }
-                if (enableDebugLogs)
-                    Debug.LogWarning($"[ScoreApiClient] GET-by-id after update failed, returning local existing record id={existing.Id}");
                 onComplete?.Invoke(existing);
             }
-            else
-            {
-                if (enableDebugLogs)
-                    Debug.LogWarning($"[ScoreApiClient] Update failed code={req.responseCode} error={req.error}");
-                onComplete?.Invoke(null);
-            }
+            else onComplete?.Invoke(null);
         }
     }
 
@@ -372,48 +254,30 @@ public class ScoreApiClient : MonoBehaviour
 
     IEnumerator DeleteRecordByPlayerCoroutine(string playerName, Action<bool> onComplete)
     {
-        if (enableDebugLogs)
-            Debug.Log($"[ScoreApiClient] DeleteRecordByPlayer '{playerName}'");
         PlayerScore existing = null;
         bool done = false;
         FindPlayerRecord(playerName, (r) => { existing = r; done = true; });
         while (!done) yield return null;
 
-        if (existing == null)
-        {
-            if (enableDebugLogs)
-                Debug.Log($"[ScoreApiClient] No record found for '{playerName}' to delete");
-            onComplete?.Invoke(false);
-            yield break;
-        }
+        if (existing == null) { onComplete?.Invoke(false); yield break; }
 
         string url = $"{baseUrl}{ScoresPath}/{existing.Id}";
-        if (enableDebugLogs)
-            Debug.Log($"[ScoreApiClient] Deleting id={existing.Id} via DELETE {url}");
         using (var req = UnityWebRequest.Delete(url))
         {
             yield return SendRequest(req, null);
-            bool ok = req.responseCode >= 200 && req.responseCode < 300;
-            if (enableDebugLogs)
-            {
-                if (ok) Debug.Log($"[ScoreApiClient] Delete success id={existing.Id}");
-                else Debug.LogWarning($"[ScoreApiClient] Delete failed id={existing.Id} code={req.responseCode} error={req.error}");
-            }
-            onComplete?.Invoke(ok);
+            onComplete?.Invoke(req.responseCode >= 200 && req.responseCode < 300);
         }
     }
 
-    public void GetRank(string playerName, Action<RankResult> onComplete)
+    public void GetRank(string playerName, Action<RankResult?> onComplete)
     {
         StartCoroutine(GetRankCoroutine(playerName, onComplete));
     }
 
-    IEnumerator GetRankCoroutine(string playerName, Action<RankResult> onComplete)
+    IEnumerator GetRankCoroutine(string playerName, Action<RankResult?> onComplete)
     {
         if (string.IsNullOrWhiteSpace(playerName)) { onComplete?.Invoke(null); yield break; }
         string url = $"{baseUrl}{ScoresPath}/rank/{UnityWebRequest.EscapeURL(playerName)}";
-        if (enableDebugLogs)
-            Debug.Log($"[ScoreApiClient] GET rank for '{playerName}' url={url}");
         using (var req = UnityWebRequest.Get(url))
         {
             yield return SendRequest(req, null);
@@ -423,18 +287,11 @@ public class ScoreApiClient : MonoBehaviour
                 {
                     var txt = req.downloadHandler.text;
                     var rank = JsonUtility.FromJson<RankResult>(txt);
-                    if (enableDebugLogs && rank != null)
-                        Debug.Log($"[ScoreApiClient] Rank result player={rank.player} score={rank.score} rank={rank.rank}");
                     onComplete?.Invoke(rank);
                 }
                 catch { onComplete?.Invoke(null); }
             }
-            else
-            {
-                if (enableDebugLogs)
-                    Debug.LogWarning($"[ScoreApiClient] GET rank failed code={req.responseCode} error={req.error}");
-                onComplete?.Invoke(null);
-            }
+            else onComplete?.Invoke(null);
         }
     }
 

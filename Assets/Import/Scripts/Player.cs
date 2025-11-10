@@ -1,50 +1,82 @@
 using UnityEngine;
+using System.Collections;
 
-[RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(Rigidbody2D))]
 public class Player : MonoBehaviour
 {
-    private CharacterController character;
-    private Vector3 direction;
+    private Rigidbody2D rb;
+    private Animator animator;
+    private bool isGrounded;
+    private Vector2 startPosition;
+    private bool isReturning; // buat mencegah coroutine dobel
 
-    public float jumpForce = 8f;
-    public float gravity = 9.81f * 2f;
+    public float jumpForce = 14f;
+    public float gravityScale = 3.5f;
+    public float forwardForce = 3f;
+    public float returnDelay = 0.2f; // jeda sebelum balik
+    public float returnSpeed = 5f;
+
+    public Transform groundCheck;
+    public float groundCheckRadius = 0.1f;
+    public LayerMask groundLayer;
 
     private void Awake()
     {
-        character = GetComponent<CharacterController>();
+        rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+        rb.freezeRotation = true;
     }
 
+    private void Start()
+    {
+        startPosition = transform.position;
+    }
+    
     private void OnEnable()
     {
-        direction = Vector3.zero;
+        rb.velocity = Vector2.zero;
+        isReturning = false;
     }
 
     private void Update()
     {
-        if (character.isGrounded)
-        {
-            // jaga tetap di tanah, jangan terus dorong ke bawah
-            direction.y = -1f;
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
-            if (Input.GetButton("Jump"))
-            {
-                direction.y = jumpForce;
-            }
-        }
-        else
+        if (isGrounded && Input.GetButtonDown("Jump") && !isReturning)
         {
-            // baru tambahkan gravitasi ketika di udara
-            direction.y -= gravity * Time.deltaTime;
+            rb.velocity = new Vector2(forwardForce, jumpForce);
+            StartCoroutine(ReturnInAir());
         }
 
-        character.Move(direction * Time.deltaTime);
+        animator.SetBool("isGrounded", isGrounded);
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void FixedUpdate()
     {
-        if (other.CompareTag("Obstacle")) {
-            GameManager.Instance.GameOver();
-        }
+        if (rb.velocity.y < 0)
+            rb.velocity += Vector2.up * Physics2D.gravity.y * (gravityScale - 1) * Time.fixedDeltaTime;
     }
 
+    private IEnumerator ReturnInAir()
+    {
+        isReturning = true;
+
+        // Tunggu sedikit waktu biar sempat maju dulu
+        yield return new WaitForSeconds(returnDelay);
+
+        // Balik ke posisi awal selama di udara
+        while (Vector2.Distance(transform.position, startPosition) > 0.05f)
+        {
+            transform.position = Vector2.MoveTowards(transform.position, startPosition, returnSpeed * Time.deltaTime);
+            yield return null;
+        }
+
+        isReturning = false;
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Obstacle"))
+            GameManager.Instance.GameOver();
+    }
 }
