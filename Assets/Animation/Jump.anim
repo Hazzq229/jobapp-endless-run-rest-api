@@ -22,26 +22,26 @@ AnimationClip:
     curve:
     - time: 0
       value: {fileID: -1264050854, guid: 467320b0365621e46a17e2c6450f487b, type: 3}
-    - time: 0.041666668
-      value: {fileID: 1997317208, guid: 467320b0365621e46a17e2c6450f487b, type: 3}
     - time: 0.083333336
-      value: {fileID: -1168302195, guid: 467320b0365621e46a17e2c6450f487b, type: 3}
-    - time: 0.125
-      value: {fileID: -1544801011, guid: 467320b0365621e46a17e2c6450f487b, type: 3}
+      value: {fileID: 1997317208, guid: 467320b0365621e46a17e2c6450f487b, type: 3}
     - time: 0.16666667
-      value: {fileID: -1209638920, guid: 467320b0365621e46a17e2c6450f487b, type: 3}
-    - time: 0.20833333
-      value: {fileID: -1230246201, guid: 467320b0365621e46a17e2c6450f487b, type: 3}
+      value: {fileID: -1168302195, guid: 467320b0365621e46a17e2c6450f487b, type: 3}
     - time: 0.25
+      value: {fileID: -1544801011, guid: 467320b0365621e46a17e2c6450f487b, type: 3}
+    - time: 0.33333334
+      value: {fileID: -1209638920, guid: 467320b0365621e46a17e2c6450f487b, type: 3}
+    - time: 0.41666666
+      value: {fileID: -1230246201, guid: 467320b0365621e46a17e2c6450f487b, type: 3}
+    - time: 0.5
       value: {fileID: 905738102, guid: 467320b0365621e46a17e2c6450f487b, type: 3}
-    - time: 0.29166666
+    - time: 0.5833333
       value: {fileID: -418601131, guid: 467320b0365621e46a17e2c6450f487b, type: 3}
     attribute: m_Sprite
     path: 
     classID: 212
     script: {fileID: 0}
     flags: 2
-  m_SampleRate: 24
+  m_SampleRate: 12
   m_WrapMode: 0
   m_Bounds:
     m_Center: {x: 0, y: 0, z: 0}
@@ -71,7 +71,7 @@ AnimationClip:
     m_AdditiveReferencePoseClip: {fileID: 0}
     m_AdditiveReferencePoseTime: 0
     m_StartTime: 0
-    m_StopTime: 0.3333333
+    m_StopTime: 0.6666666
     m_OrientationOffsetY: 0
     m_Level: 0
     m_CycleOffset: 0
@@ -90,4 +90,18 @@ AnimationClip:
   m_EulerEditorCurves: []
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
-  m_Events: []
+  m_Events:
+  - time: 0
+    functionName: AnimEvent_DisableCollider
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 0.5833333
+    functionName: AnimEvent_EnableCollider
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
