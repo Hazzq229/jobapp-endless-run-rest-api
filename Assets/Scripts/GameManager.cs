@@ -11,11 +11,13 @@ public class GameManager : MonoBehaviour
     public float gameSpeedIncrease = 0.1f;
     public float gameSpeed { get; private set; }
 
-    [SerializeField] private TextMeshProUGUI scoreText;
+    [SerializeField] private TextMeshProUGUI inGameScoreText;
     [SerializeField] private TextMeshProUGUI gameOverText;
-    [SerializeField] private Button retryButton;
+    [SerializeField] private TextMeshProUGUI gameOverScoreText;
+    [SerializeField] private Image backgroundPanel;
+    [SerializeField] ScoreUIManager scoreUi;
 
-    private Player player;
+    private PlayerController player;
     private Spawner spawner;
 
     private float score;
@@ -39,12 +41,15 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        player = FindObjectOfType<Player>();
+        player = FindObjectOfType<PlayerController>();
         spawner = FindObjectOfType<Spawner>();
 
         // Hide score UI (if present) until gameplay starts
-        var scoreUi = FindObjectOfType<ScoreUIManager>();
+        scoreUi = FindObjectOfType<ScoreUIManager>();
         if (scoreUi != null) scoreUi.SetVisible(false);
+
+        backgroundPanel.gameObject.SetActive(true);
+        inGameScoreText.gameObject.SetActive(false);
 
         var nameUi = FindObjectOfType<PlayerNameUI>();
         if (nameUi != null)
@@ -75,8 +80,9 @@ public class GameManager : MonoBehaviour
 
         player.gameObject.SetActive(true);
         spawner.gameObject.SetActive(true);
+        inGameScoreText.gameObject.SetActive(true);
+        backgroundPanel.gameObject.SetActive(false);
         gameOverText.gameObject.SetActive(false);
-        retryButton.gameObject.SetActive(false);
 
         UpdateHiscore();
 
@@ -94,7 +100,6 @@ public class GameManager : MonoBehaviour
         }
 
         // Show leaderboard / score UI when gameplay starts
-        var scoreUi = FindObjectOfType<ScoreUIManager>();
         if (scoreUi != null) scoreUi.SetVisible(true);
     }
 
@@ -111,12 +116,10 @@ public class GameManager : MonoBehaviour
         if (player != null) player.gameObject.SetActive(false);
         if (spawner != null) spawner.gameObject.SetActive(false);
 
-        // hide game over UI and retry button
+        // hide game over UI
         if (gameOverText != null) gameOverText.gameObject.SetActive(false);
-        if (retryButton != null) retryButton.gameObject.SetActive(false);
 
         // hide leaderboard
-        var scoreUi = FindObjectOfType<ScoreUIManager>();
         if (scoreUi != null) scoreUi.SetVisible(false);
     }
 
@@ -128,13 +131,14 @@ public class GameManager : MonoBehaviour
         player.gameObject.SetActive(false);
         spawner.gameObject.SetActive(false);
         gameOverText.gameObject.SetActive(true);
-        retryButton.gameObject.SetActive(true);
+        inGameScoreText.gameObject.SetActive(false);
+        backgroundPanel.gameObject.SetActive(true);
 
         UpdateHiscore();
+        gameOverScoreText.text = Mathf.FloorToInt(score).ToString("D5");
 
         // Hide leaderboard / score UI when game over
-        var scoreUi = FindObjectOfType<ScoreUIManager>();
-        //if (scoreUi != null) scoreUi.SetVisible(false);
+        if (scoreUi != null) scoreUi.SetVisible(false);
 
         // Send final score to server (create or update)
         try {
@@ -144,8 +148,7 @@ public class GameManager : MonoBehaviour
                 ScoreApiClient.Instance.UpdateScoreForPlayer(username, finalScore, (rec) => {
                     Debug.Log($"UpdateScoreForPlayer callback: {(rec != null ? "ok" : "failed")}");
                     // refresh leaderboard UI if present
-                    var ui = FindObjectOfType<ScoreUIManager>();
-                    if (ui != null) ui.Refresh();
+                    if (scoreUi != null) scoreUi.Refresh();
                 });
             }
             else Debug.Log("ScoreApiClient instance not found in scene.");
@@ -170,17 +173,21 @@ public class GameManager : MonoBehaviour
             // Pause gameplay
             enabled = false;
             // Hide score UI while changing
-            var scoreUi = FindObjectOfType<ScoreUIManager>();
             if (scoreUi != null) scoreUi.SetVisible(false);
             nameUi.Show(prefillWithSaved: true, isChange: true);
         }
+    }
+
+    public void OnExit()
+    {
+        Application.Quit();
     }
 
     private void Update()
     {
         gameSpeed += gameSpeedIncrease * Time.deltaTime;
         score += gameSpeed * Time.deltaTime;
-        scoreText.text = Mathf.FloorToInt(score).ToString("D5");
+        inGameScoreText.text = Mathf.FloorToInt(score).ToString("D5");
     }
 
     private void UpdateHiscore()
